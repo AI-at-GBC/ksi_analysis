@@ -14,7 +14,9 @@ To submit changes to this repo, please do the following steps:
 - `git checkout -b <your_branch_name>` (create a branch name based on the changes you want to make)
 - Make your changes
 - Before committing your file, please reset your runtime to get rid of the runtime numbers (IE the numbers between the square brackets beside each cell). The option should be under runtime -> restart runtime, or something like that.
+- Save your file - both the .ipynb and the .py
 - `git add ksi_analysis.ipynb`
+- `git add ksi_analysis.py`
 - `git commit -m "Your commit message here"` - please write a short but descriptive message!
 - `git push origin <your_branch_name>`
 - Open a Pull Request (PR) in Github, attempting to merge your branch into main, and request reviews from the group
