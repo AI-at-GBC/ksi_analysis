@@ -43,7 +43,8 @@ import pandas_profiling
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-data = pd.read_csv('https://raw.githubusercontent.com/eduardomoraes/KSI/main/KSI_CLEAN.csv')
+data = pd.read_csv("https://raw.githubusercontent.com/danielmaxsiegel/GBC-ML1/main/datasets/KSI_CLEAN.csv")
+RSEED = 42 # The answer to the ultimate question of life, the universe, and everything
 
 """# Initial observations of the dataset"""
 
@@ -63,11 +64,11 @@ data.info()
 plt.figure(figsize=(20,5))
 sns.heatmap(data.isna(), cbar=False, cmap='viridis', yticklabels=False)
 
-#After trying numerous times to try and figure out the blanks values in the database, they've been setup as ' ' strings which hid blank values
+#After trying numerous times to try and figure out the blanks values in the database, they've been setup as ' ' strings
 plt.figure(figsize=(20,5))
 sns.heatmap(data.eq(' '), cbar=False, cmap='viridis', yticklabels=False)
 
-"""# Cleaning The Data"""
+"""# Clean Data"""
 
 # Drop superfluous columns - some with irrelevant data, some with duplicate information (such as "FATAL_NO")
 data = data.drop(['YEAR', 'MONTH', 'DAY', 'HOUR', 'MINUTES', 'LATITUDE', 'LONGITUDE', 'Ward_Name', 'Hood_Name', 'Division', 'District', 'STREET1', 'STREET2', 'OFFSET', 'INITDIR', 'ACCLASS', 'FATAL_NO'], axis=1)
@@ -79,7 +80,7 @@ for column_name in ['FATAL','DISABILITY', 'ALCOHOL', 'REDLIGHT',
                     'CYCLIST', 'PEDESTRIAN']:
     data[column_name] = data[column_name].astype('int64')
 
-# Clean ROAD_CLASS column (hich type of road the drivers were on) was setup as an ordinal feature
+# Clean ROAD_CLASS column (which type of road the drivers were on) was setup as an ordinal feature
 data['ROAD_CLASS'] = data['ROAD_CLASS'].replace(to_replace=['Minor Arterial', 'Laneway', 'Local'], value=0, inplace=False, limit=None, regex=False, method='pad')
 data['ROAD_CLASS'] = data['ROAD_CLASS'].replace(to_replace=['Major Arterial', 'Major Arterial Ramp'], value=1, inplace=False, limit=None, regex=False, method='pad')
 data['ROAD_CLASS'] = data['ROAD_CLASS'].replace(to_replace=['Collector', 'Expressway', 'Expressway Ramp'], value=2, inplace=False, limit=None, regex=False, method='pad')
@@ -100,7 +101,7 @@ data['RDSFCOND'] = data['RDSFCOND'].replace(to_replace=['Dry', ' '], value=0, in
 data['RDSFCOND'] = data['RDSFCOND'].replace(to_replace=['Wet', 'Other', 'Loose Sand or Gravel', 'Loose Snow'], value=1, inplace=False, limit=None, regex=False, method='pad')
 data['RDSFCOND'] = data['RDSFCOND'].replace(to_replace=['Slush', 'Ice', 'Packed Snow', 'Spilled liquid'], value=2, inplace=False, limit=None, regex=False, method='pad')
 
-# Clean INVAGE column (age of involved party)
+# Clean INVAGE column (age of involved party) was setup as an ordinal feature
 # setup ordinal list, and average filled unknown values
 data['INVAGE'] = data['INVAGE'].replace(to_replace=['0 to 4'], value=0, inplace=False, limit=None, regex=False, method='pad')
 data['INVAGE'] = data['INVAGE'].replace(to_replace=['5 to 9'], value=1, inplace=False, limit=None, regex=False, method='pad')
@@ -124,25 +125,49 @@ data['INVAGE'] = data['INVAGE'].replace(to_replace=['90 to 94'], value=18, inpla
 data['INVAGE'] = data['INVAGE'].replace(to_replace=['Over 95'], value=19, inplace=False, limit=None, regex=False, method='pad')
 data['INVAGE'] = data['INVAGE'].replace(to_replace=['unknown'], value=7, inplace=False, limit=None, regex=False, method='pad')
 
+# Clean INVAGE column (age of involved party) was setup as an ordinal feature
+# setup ordinal list, and average filled unknown values
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['0 to 4'], value=0, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['5 to 9'], value=0, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['10 to 14'], value=1, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['15 to 19'], value=1, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['20 to 24'], value=2, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['25 to 29'], value=2, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['30 to 34'], value=3, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['35 to 39'], value=3, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['40 to 44'], value=4, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['45 to 49'], value=4, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['50 to 54'], value=5, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['55 to 59'], value=5, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['60 to 64'], value=6, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['65 to 69'], value=6, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['70 to 74'], value=7, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['75 to 79'], value=7, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['80 to 84'], value=8, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['85 to 89'], value=8, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['90 to 94'], value=9, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['Over 95'], value=9, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['unknown'], value=2, inplace=False, limit=None, regex=False, method='pad')
+
 # Clean INJURY column (severity of injury)
 # It appears that the injury code left blank means no injury, or the party is on the police report but indirectly involved in the accident so left blank
 data.loc[data['INJURY'] == ' ']
 
 # Injury will be our label, with ' ' values set to no injury
 data['INJURY'] = data['INJURY'].replace(to_replace=['None', ' '], value=0, inplace=False, limit=None, regex=False, method='pad')
-data['INJURY'] = data['INJURY'].replace(to_replace=['Minimal'], value=1, inplace=False, limit=None, regex=False, method='pad')
-data['INJURY'] = data['INJURY'].replace(to_replace=['Minor'], value=2, inplace=False, limit=None, regex=False, method='pad')
-data['INJURY'] = data['INJURY'].replace(to_replace=['Major'], value=3, inplace=False, limit=None, regex=False, method='pad')
-data['INJURY'] = data['INJURY'].replace(to_replace=['Fatal'], value=4, inplace=False, limit=None, regex=False, method='pad')
+data['INJURY'] = data['INJURY'].replace(to_replace=['Minimal', 'Minor'], value=1, inplace=False, limit=None, regex=False, method='pad')
+data['INJURY'] = data['INJURY'].replace(to_replace=['Major'], value=2, inplace=False, limit=None, regex=False, method='pad')
+data['INJURY'] = data['INJURY'].replace(to_replace=['Fatal'], value=3, inplace=False, limit=None, regex=False, method='pad')
 
 # Clean VEHTYPE column - the type of vehicle involved.
 # As we can see, pedestrian collisions have an other classifier very frequently.  However, it's also been tied to vehicle owners making this a difficult feature to clean
 # As other is such a large category, I will not be changing this into an ordinal set as we lack the domain knowledge, and instead categorize using get_dummies.
 # So we ended up grouping vehicle classes, leaving 'other' as it's own category, and leaving ' ' as it's own category
 data['VEHTYPE'].value_counts()
+
 data.loc[data['VEHTYPE'] == 'Other']
 
-#Grouping small categories together by weight class/vehicle type
+#Grouping small categories together by weight class/vehicle type and setup as an ordinal feature
 data['VEHTYPE'] = data['VEHTYPE'].replace(to_replace=[' '], value='NA', inplace=False, limit=None, regex=False, method='pad')
 data['VEHTYPE'] = data['VEHTYPE'].replace(to_replace=['Municipal Transit Bus (TTC)', 'Truck - Open', 'Delivery Van', 'Street Car', 'Truck - Dump', 'Truck-Tractor', 'Bus (Other) (Go Bus, Gray Coach)', 'Truck (other)', 'Intercity Bus', 'Truck - Tank', 'School Bus', 'Construction Equipment', 'Truck - Car Carrier', 'Fire Vehicle', 'Other Emergency Vehicle'], value='Heavy Commercial', inplace=False, limit=None, regex=False, method='pad')
 data['VEHTYPE'] = data['VEHTYPE'].replace(to_replace=['Off Road - 2 Wheels', 'Moped'], value='Motorcycle', inplace=False, limit=None, regex=False, method='pad')
@@ -158,6 +183,7 @@ data['INVTYPE'] = data['INVTYPE'].replace(to_replace=[' ', 'Other Property Owner
 data['INVTYPE'] = data['INVTYPE'].replace(to_replace=['Trailer Owner'], value='Vehicle Owner', inplace=False, limit=None, regex=False, method='pad')
 
 #Ordinal features and our label has now been setup, now we need to one hot encode all our categorical features
+
 # Clean LOCCORD - Location Coordinates of accident
 data['LOCCOORD'] = data['LOCCOORD'].replace(to_replace=[' ', 'Park, Private Property, Public Lane', 'Entrance Ramp Westbound'], value='Other', inplace=False, limit=None, regex=False, method='pad')
 data1 = pd.get_dummies(data[['LOCCOORD']])
@@ -231,182 +257,242 @@ data.head()
 
 """# Data Preprocessing"""
 
-# string_columns=data.select_dtypes(include=[object])
-# string_columns.head(5)
+############### PCA ######################################
 
-# from sklearn import preprocessing
+from sklearn.decomposition import TruncatedSVD as svd
 
-# le = preprocessing.LabelEncoder()
+df = data.iloc[:,24:]
 
-# string_columns_transformed = string_columns.apply(le.fit_transform)
-# string_columns_transformed.head()
+df.head()
 
-# string_columns.shape
+df.shape
 
-# string_columns_transformed.shape
+from sklearn.pipeline import Pipeline
 
-# data = data.drop(columns=data.select_dtypes(['object']).columns)
-#
+# define dataset
+X = df
+y = data.iloc[:,9]
+y
 
-# data.shape
+from sklearn.linear_model import LogisticRegression
 
-# data=pd.concat([data,string_columns_transformed],axis=1)
-# data.shape
+steps = [('svd', svd), ('m', LogisticRegression())]
+model = Pipeline(steps=steps)
 
-# data.columns
+from numpy import mean
+from numpy import std
+from sklearn.datasets import make_classification
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.pipeline import Pipeline
+from sklearn.decomposition import TruncatedSVD
+from sklearn.linear_model import LogisticRegression
+from matplotlib import pyplot
 
-# data['FATAL']
+
+def get_models():
+	models = dict()
+	for i in range(1,20):
+		steps = [('svd', TruncatedSVD(n_components=i)), ('m', LogisticRegression())]
+		models[str(i)] = Pipeline(steps=steps)
+	return models
+
+# evaluate a give model using cross-validation
+def evaluate_model(model, X, y):
+	cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
+	scores = cross_val_score(model, X, y, scoring='accuracy', cv=cv, n_jobs=-1, error_score='raise')
+	return scores
+
+# get the models to evaluate
+models = get_models()
+# evaluate the models and store results
+results, names = list(), list()
+for name, model in models.items():
+	scores = evaluate_model(model, X, y)
+	results.append(scores)
+	names.append(name)
+	print('>%s %.3f (%.3f)' % (name, mean(scores), std(scores)))
+# plot model performance for comparison
+pyplot.boxplot(results, labels=names, showmeans=True)
+pyplot.xticks(rotation=45)
+pyplot.show()
+
+svd = TruncatedSVD(n_components=18, n_iter=7, random_state=42)
+svd.fit(df)
+X_svd = svd.transform(X)
+
+print("original shape:   ", X.shape)
+print("transformed shape:", X_svd.shape)
+
+a = data.iloc[:,:24]
+b = pd.DataFrame(X_svd)
+
+data = pd.concat([a, b], axis=1)
+
+# Split data into X and y
+injury_data = data['INJURY']
+data = data.drop(columns=['INJURY'])
+
+data.head()
 
 """## Seletion of Best best features"""
 
-# y=data.iloc[:,25]
-#X=data.iloc[:,:-1]
-# X = data.drop(columns=['FATAL', 'DISABILITY', 'ALCOHOL', 'REDLIGHT', 'AG_DRIV', 'SPEEDING', 'PASSENGER', 'EMERG_VEH', 'TRSN_CITY_VEH', 'TRUCK', 'MOTORCYCLE', 'AUTOMOBILE', 'CYCLIST', 'PEDESTRIAN', 'FATAL_NO', 'ACCNUM'])
-
-# X.head(5)
-# X.shape
-
-"""#Applying Filter Feature Selection - Pearson Correlation"""
-
-# feature_name = list(X.columns)
-# no of maximum features we need to select
-# num_feats=10
-
-
-def corr_selector(X, y,num_feats):
-    # Your code goes here (Multiple lines)
-    corr_list = []
-    feature_name = X.columns.tolist()
-
-    for i in X.columns.tolist():
-        cor = np.corrcoef(X[i], y)[0, 1]
-        corr_list.append(cor)
-
-    corr_list = [0 if np.isnan(i) else i for i in corr_list]
-
-    corr_feature = X.iloc[:,np.argsort(np.abs(corr_list))[-num_feats:]].columns.tolist()
-
-    corr_support = [True if i in corr_feature else False for i in feature_name]
-    # Your code ends here
-    return corr_support, corr_feature
-
-# corr_support, corr_feature = corr_selector(X, y,num_feats)
-# print(str(len(corr_feature)), 'selected features')
-
-# corr_feature
-
-"""#Appying Chi-Squared Selector function"""
-
+# Commented out IPython magic to ensure Python compatibility.
+import numpy as np
+import pandas as pd
+# %matplotlib inline
+import scipy.stats as ss
+from collections import Counter
+import math
+from scipy import stats
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
-from sklearn.preprocessing import MinMaxScaler
-
-def chi_squared_selector(X, y, num_feats):
-
-    X_n = MinMaxScaler().fit_transform(X)
-    chi_selector = SelectKBest(chi2, k=num_feats)
-    chi_selector.fit(X_n, y)
-    chi_support = chi_selector.get_support()
-    chi_feature = X.loc[:,chi_support].columns.tolist()
-
-    return chi_support, chi_feature
-
-# chi_support, chi_feature = chi_squared_selector(X, y,num_feats)
-# print(str(len(chi_feature)), 'selected features')
-
-# chi_feature
-
-"""#Appying Wrapper Feature Selection - Recursive Feature Elimination"""
-
+from sklearn.feature_selection import SelectFromModel
+from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import RFE
-from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import MinMaxScaler
-
-def rfe_selector(X, y, num_feats):
-    # Your code goes here (Multiple lines)
-    X_n = MinMaxScaler().fit_transform(X)
-    rfe_selector = RFE(estimator=LogisticRegression(), n_features_to_select=num_feats, step=10, verbose=5)
-    rfe_selector.fit(X_n, y)
-    rfe_support = rfe_selector.get_support()
-    rfe_feature = X.loc[:,rfe_support].columns.tolist()
-    # Your code ends here
-    return rfe_support, rfe_feature
-
-# rfe_support, rfe_feature = rfe_selector(X, y,num_feats)
-# print(str(len(rfe_feature)), 'selected features')
-
-# rfe_feature
-
-"""#Appying Embedded Selection - Lasso: SelectFromModel"""
-
-from sklearn.feature_selection import SelectFromModel
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import MinMaxScaler
-
-def embedded_log_reg_selector(X, y, num_feats):
-    # Your code goes here (Multiple lines)
-    embedded_lr_selector = SelectFromModel(LogisticRegression(penalty="l2"), max_features=num_feats)
-    embedded_lr_selector.fit(X, y)
-    embedded_lr_support = embedded_lr_selector.get_support()
-    embedded_lr_feature = X.loc[:,embedded_lr_support].columns.tolist()
-    # Your code ends here
-    return embedded_lr_support, embedded_lr_feature
-
-# embedded_lr_support, embedded_lr_feature = embedded_log_reg_selector(X, y, num_feats)
-# print(str(len(embedded_lr_feature)), 'selected features')
-
-# embedded_lr_feature
-
-"""#Appying Tree based(Random Forest): SelectFromModel"""
-
-from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import RandomForestClassifier
-
-def embedded_rf_selector(X, y, num_feats):
-    # Your code goes here (Multiple lines)
-    embedded_rf_selector = SelectFromModel(RandomForestClassifier(n_estimators=500), max_features=num_feats)
-    embedded_rf_selector.fit(X, y)
-    embedded_rf_support = embedded_rf_selector.get_support()
-    embedded_rf_feature = X.loc[:,embedded_rf_support].columns.tolist()
-    # Your code ends here
-    return embedded_rf_support, embedded_rf_feature
-
-# embedded_rf_support, embedded_rf_feature = embedded_rf_selector(X, y, num_feats)
-# print(str(len(embedded_rf_feature)), 'selected features')
-
-# embedded_rf_feature
-
-"""#Appying Tree based(Light GBM): SelectFromModel"""
-
-from sklearn.feature_selection import SelectFromModel
 from lightgbm import LGBMClassifier
 
-def embedded_lgbm_selector(X, y, num_feats):
-    # Your code goes here (Multiple lines)
-    lgbc=LGBMClassifier(n_estimators=500, learning_rate=0.05, num_leaves=32, colsample_bytree=0.2,
-            reg_alpha=3, reg_lambda=1, min_split_gain=0.01, min_child_weight=40)
+X = data
+feature_names = list(X.columns)
+y = injury_data
+num_feats = 20
 
-    embedded_lgbm_selector = SelectFromModel(lgbc, max_features=num_feats)
-    embedded_lgbm_selector.fit(X, y)
-    embedded_lgbm_support = embedded_lgbm_selector.get_support()
-    embedded_lgbm_feature = X.loc[:,embedded_lgbm_support].columns.tolist()
-    # Your code ends here
-    return embedded_lgbm_support, embedded_lgbm_feature
+cor_list = cor_support = cor_feature = []
+for i in X.columns:
+  cor = np.corrcoef(X[i], y)[0, 1]
+  cor_list.append(cor)
 
-# embedded_lgbm_support, embedded_lgbm_feature = embedded_lgbm_selector(X, y, num_feats)
-# print(str(len(embedded_lgbm_feature)), 'selected features')
+cor_list = [0 if np.isnan(i) else i for i in cor_list] # replace NaN with 0
+cor_feature = X.iloc[:,np.argsort(np.abs(cor_list))[-num_feats:]].columns.tolist()
+cor_support = [True if i in cor_feature else False for i in list(X.columns)]
 
-# embedded_lgbm_feature
+rfe_support = rfe_feature = []
+min_max_scaler = MinMaxScaler()
+X_train_minmax = min_max_scaler.fit_transform(X)
+rfe_selector = RFE(estimator=LogisticRegression(), n_features_to_select=num_feats, step=15)
+rfe_selector.fit(X_train_minmax, y)
+rfe_support = rfe_selector.get_support()
+rfe_feature = X.loc[:,rfe_support].columns.tolist()
 
-"""#What are the best features?"""
+embedded_lr_support = embedded_lr_feature = []
+lr = LogisticRegression(penalty='l1', solver='liblinear')
+embedded_lr_selector = SelectFromModel(lr, max_features=num_feats)
+embedded_lr_selector = embedded_lr_selector.fit(X, y)
+embedded_lr_support = embedded_lr_selector.get_support()
+embedded_lr_feature = X.loc[:, embedded_lr_support].columns.tolist()
 
-# pd.set_option('display.max_rows', None)
-# # put all selection together
-# feature_selection_data = pd.DataFrame({'Feature':feature_name, 'Pearson':corr_support, 'Chi-2':chi_support, 'RFE':rfe_support, 'Logistics':embedded_lr_support,
-#                                     'Random Forest':embedded_rf_support, 'LightGBM':embedded_lgbm_support})
-# # count the selected times for each feature
-# feature_selection_data['Total'] = np.sum(feature_selection_data, axis=1)
-# # display the top 100
-# feature_selection_data = feature_selection_data.sort_values(['Total','Feature'] , ascending=False)
-# feature_selection_data.index = range(1, len(feature_selection_data)+1)
-# feature_selection_data.head(num_feats)
+embedded_rf_support = embedded_rf_feature = []
+sel = SelectFromModel(RandomForestClassifier(n_estimators = 40, bootstrap=False, max_features=num_feats))
+sel.fit(X, y)
+embedded_rf_feature = X.columns[(sel.get_support())]
+embedded_rf_support = sel.get_support()
+
+embedded_lgbm_support = embedded_lgbm_feature = []
+lgbc=LGBMClassifier(n_estimators=500, learning_rate=0.05, num_leaves=32, colsample_bytree=0.2,
+        reg_alpha=3, reg_lambda=1, min_split_gain=0.01, min_child_weight=40)
+embedded_lgbm_selector = SelectFromModel(lgbc, max_features=num_feats)
+embedded_lgbm_selector.fit(X, y)
+embedded_lgbm_support = embedded_lgbm_selector.get_support()
+embedded_lgbm_feature = X.loc[:,embedded_lgbm_support].columns.tolist()
+
+pd.set_option('display.max_rows', None)
+feature_selection_df = pd.DataFrame({
+    'Feature':feature_names,
+    'Pearson':cor_support,
+    'RFE':rfe_support,
+    'Logistic Regression':embedded_lr_support,
+    'Random Forest':embedded_rf_support,
+    'LightGBM':embedded_lgbm_support
+})
+feature_selection_df['Total'] = np.sum(feature_selection_df, axis=1)
+feature_selection_df = feature_selection_df.sort_values(['Total','Feature'] , ascending=False)
+feature_selection_df.index = range(1, len(feature_selection_df)+1)
+
+feature_selection_df
+
+"""# Run Random Forest"""
+
+from sklearn.model_selection import train_test_split
+
+train, test, train_labels, test_labels = train_test_split(data, injury_data,
+                                                          stratify = injury_data,
+                                                          test_size = 0.3,
+                                                          random_state = RSEED)
+
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.ensemble import RandomForestClassifier
+
+parameters = {
+    'n_estimators':[100],
+    'max_depth':[10],
+    'max_features': ['auto', 'sqrt', None],
+    'max_leaf_nodes':[28],
+    'min_samples_split': [5],
+    'bootstrap': [False]
+}
+
+model = RandomForestClassifier(n_estimators=100,
+                               random_state=RSEED,
+                               max_features = 'sqrt')
+
+cv = RandomizedSearchCV(
+    scoring='roc_auc',
+    estimator = model,
+    param_distributions=parameters,
+    cv=3,
+    n_iter=10,
+    random_state=RSEED
+  )
+
+data.head()
+
+clf = RandomForestClassifier(max_depth=10, random_state=RSEED)
+clf.fit(train, train_labels)
+
+predictions = clf.predict(test)
+
+from sklearn.metrics import confusion_matrix
+import itertools
+
+#  Helper function to plot Confusion matrix
+def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Oranges):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    Source: http://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    plt.figure(figsize = (10, 10))
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title, size = 24)
+    plt.colorbar(aspect=4)
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45, size = 14)
+    plt.yticks(tick_marks, classes, size = 14)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+
+    # Labeling the plot
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt), fontsize = 20,
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.grid(None)
+    plt.tight_layout()
+    plt.ylabel('True label', size = 18)
+    plt.xlabel('Predicted label', size = 18)
+
+cm = confusion_matrix(test_labels, predictions)
+plot_confusion_matrix(cm, ['NO INJURY', 'MINOR INJURY', 'MAJOR INJURY', 'FATAL'])
+# cm.show()
