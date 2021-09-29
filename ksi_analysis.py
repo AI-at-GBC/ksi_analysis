@@ -48,8 +48,8 @@ data = pd.read_csv('https://raw.githubusercontent.com/eduardomoraes/KSI/main/KSI
 """# Initial observations of the dataset"""
 
 # Criteria 1: At least 2 classes. We have ~11,000 rows of class A, ~2000 rows of class B, and a very small class C.
-print("The target class, ACCLASS - the result of the accident")
-data['ACCLASS'].value_counts()
+print("The target class, INJURY - the injury suffered by each person in the accident")
+data['INJURY'].value_counts()
 
 # Criteria 2 & 3: over 300 rows and 8 or more columns/features
 print('The dataset has', data.shape[0], 'rows and', data.shape[1], 'columns.')
@@ -59,12 +59,15 @@ data.head()
 
 data.info()
 
+# At first glance the data appears to be very clean
 plt.figure(figsize=(20,5))
 sns.heatmap(data.isna(), cbar=False, cmap='viridis', yticklabels=False)
 
-# The dataset is pretty good. it doesn't have any Nan values on its columns
+#After trying numerous times to try and figure out the blanks values in the database, they've been setup as ' ' strings which hid blank values
+plt.figure(figsize=(20,5))
+sns.heatmap(data.eq(' '), cbar=False, cmap='viridis', yticklabels=False)
 
-"""# Clean Data"""
+"""# Cleaning The Data"""
 
 # Drop superfluous columns - some with irrelevant data, some with duplicate information (such as "FATAL_NO")
 data = data.drop(['YEAR', 'MONTH', 'DAY', 'HOUR', 'MINUTES', 'LATITUDE', 'LONGITUDE', 'Ward_Name', 'Hood_Name', 'Division', 'District', 'STREET1', 'STREET2', 'OFFSET', 'INITDIR', 'ACCLASS', 'FATAL_NO'], axis=1)
@@ -76,23 +79,23 @@ for column_name in ['FATAL','DISABILITY', 'ALCOHOL', 'REDLIGHT',
                     'CYCLIST', 'PEDESTRIAN']:
     data[column_name] = data[column_name].astype('int64')
 
-# Clean ROAD_CLASS column (hich type of road the drivers were on)
+# Clean ROAD_CLASS column (hich type of road the drivers were on) was setup as an ordinal feature
 data['ROAD_CLASS'] = data['ROAD_CLASS'].replace(to_replace=['Minor Arterial', 'Laneway', 'Local'], value=0, inplace=False, limit=None, regex=False, method='pad')
 data['ROAD_CLASS'] = data['ROAD_CLASS'].replace(to_replace=['Major Arterial', 'Major Arterial Ramp'], value=1, inplace=False, limit=None, regex=False, method='pad')
 data['ROAD_CLASS'] = data['ROAD_CLASS'].replace(to_replace=['Collector', 'Expressway', 'Expressway Ramp'], value=2, inplace=False, limit=None, regex=False, method='pad')
 
-# Clean VISIBILITY column (the weather conditions surrounding the accident)
+# Clean VISIBILITY column (the weather conditions surrounding the accident) was setup as an ordinal feature
 original_data = data['VISIBILITY'].value_counts()
 data['VISIBILITY'] = data['VISIBILITY'].replace(to_replace=['Clear', 'Other', ' '], value=0, inplace=False, limit=None, regex=False, method='pad')
 data['VISIBILITY'] = data['VISIBILITY'].replace(to_replace=['Rain', 'Strong wind', 'Fog, Mist, Smoke, Dust'], value=1, inplace=False, limit=None, regex=False, method='pad')
 data['VISIBILITY'] = data['VISIBILITY'].replace(to_replace=['Snow', 'Freezing Rain', 'Drifting Snow'], value=2, inplace=False, limit=None, regex=False, method='pad')
 
-# Clean LIGHT column (the amount of light present at the time of accident)
+# Clean LIGHT column (the amount of light present at the time of accident) was setup as an ordinal feature, Dusk and Dawn were merged due to similar lighting
 data['LIGHT'] = data['LIGHT'].replace(to_replace=['Daylight', 'Daylight, artificial', ' ', 'Other'], value=0, inplace=False, limit=None, regex=False, method='pad')
 data['LIGHT'] = data['LIGHT'].replace(to_replace=['Dusk', 'Dusk, artificial', 'Dawn', 'Dawn, artificial'], value=1, inplace=False, limit=None, regex=False, method='pad')
 data['LIGHT'] = data['LIGHT'].replace(to_replace=['Dark', 'Dark, artificial'], value=2, inplace=False, limit=None, regex=False, method='pad')
 
-# Clean RDSFCOND column (the road surface condition)
+# Clean RDSFCOND column (the road surface condition) was setup as an ordinal feature
 data['RDSFCOND'] = data['RDSFCOND'].replace(to_replace=['Dry', ' '], value=0, inplace=False, limit=None, regex=False, method='pad')
 data['RDSFCOND'] = data['RDSFCOND'].replace(to_replace=['Wet', 'Other', 'Loose Sand or Gravel', 'Loose Snow'], value=1, inplace=False, limit=None, regex=False, method='pad')
 data['RDSFCOND'] = data['RDSFCOND'].replace(to_replace=['Slush', 'Ice', 'Packed Snow', 'Spilled liquid'], value=2, inplace=False, limit=None, regex=False, method='pad')
@@ -119,12 +122,13 @@ data['INVAGE'] = data['INVAGE'].replace(to_replace=['80 to 84'], value=16, inpla
 data['INVAGE'] = data['INVAGE'].replace(to_replace=['85 to 89'], value=17, inplace=False, limit=None, regex=False, method='pad')
 data['INVAGE'] = data['INVAGE'].replace(to_replace=['90 to 94'], value=18, inplace=False, limit=None, regex=False, method='pad')
 data['INVAGE'] = data['INVAGE'].replace(to_replace=['Over 95'], value=19, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['unknown'], value=6.75, inplace=False, limit=None, regex=False, method='pad')
+data['INVAGE'] = data['INVAGE'].replace(to_replace=['unknown'], value=7, inplace=False, limit=None, regex=False, method='pad')
 
 # Clean INJURY column (severity of injury)
-# It appears that the injury code left blank means no injury
+# It appears that the injury code left blank means no injury, or the party is on the police report but indirectly involved in the accident so left blank
 data.loc[data['INJURY'] == ' ']
 
+# Injury will be our label, with ' ' values set to no injury
 data['INJURY'] = data['INJURY'].replace(to_replace=['None', ' '], value=0, inplace=False, limit=None, regex=False, method='pad')
 data['INJURY'] = data['INJURY'].replace(to_replace=['Minimal'], value=1, inplace=False, limit=None, regex=False, method='pad')
 data['INJURY'] = data['INJURY'].replace(to_replace=['Minor'], value=2, inplace=False, limit=None, regex=False, method='pad')
@@ -136,6 +140,7 @@ data['INJURY'] = data['INJURY'].replace(to_replace=['Fatal'], value=4, inplace=F
 # As other is such a large category, I will not be changing this into an ordinal set as we lack the domain knowledge, and instead categorize using get_dummies.
 # So we ended up grouping vehicle classes, leaving 'other' as it's own category, and leaving ' ' as it's own category
 data['VEHTYPE'].value_counts()
+data.loc[data['VEHTYPE'] == 'Other']
 
 #Grouping small categories together by weight class/vehicle type
 data['VEHTYPE'] = data['VEHTYPE'].replace(to_replace=[' '], value='NA', inplace=False, limit=None, regex=False, method='pad')
@@ -152,6 +157,7 @@ data['INVTYPE'] = data['INVTYPE'].replace(to_replace=['Wheelchair', 'In-Line Ska
 data['INVTYPE'] = data['INVTYPE'].replace(to_replace=[' ', 'Other Property Owner', 'Driver - Not Hit', 'a', 'Runaway - No Driver', 'Unknown - FTR', 'Pedestrian - Not Hit', 'Witness'], value='Other', inplace=False, limit=None, regex=False, method='pad')
 data['INVTYPE'] = data['INVTYPE'].replace(to_replace=['Trailer Owner'], value='Vehicle Owner', inplace=False, limit=None, regex=False, method='pad')
 
+#Ordinal features and our label has now been setup, now we need to one hot encode all our categorical features
 # Clean LOCCORD - Location Coordinates of accident
 data['LOCCOORD'] = data['LOCCOORD'].replace(to_replace=[' ', 'Park, Private Property, Public Lane', 'Entrance Ramp Westbound'], value='Other', inplace=False, limit=None, regex=False, method='pad')
 data1 = pd.get_dummies(data[['LOCCOORD']])
