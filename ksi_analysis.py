@@ -495,4 +495,5 @@ def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix'
 
 cm = confusion_matrix(test_labels, predictions)
 plot_confusion_matrix(cm, ['NO INJURY', 'MINOR INJURY', 'MAJOR INJURY', 'FATAL'])
-# cm.show()
+
+clf.score(test, test_labels)
