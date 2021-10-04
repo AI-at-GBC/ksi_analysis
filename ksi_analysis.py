@@ -1,85 +1,137 @@
-# -*- coding: utf-8 -*-
-"""ksi_analysis.ipynb
+# To add a new cell, type '# %%'
+# To add a new markdown cell, type '# %% [markdown]'
+# %%
+from IPython import get_ipython
 
-# Toronto Traffic Accident Analysis
+# %% [markdown]
+# # Toronto Traffic Accident Analysis
+# 
+# - Daniel Siegel - 101367445
+# - Michael McAllister - 101359469
+# - Hom Kandel - 101385341
+# - Eduardo Bastos de Moraes - 101345799
+# %% [markdown]
+# ## Project Definition:
+# 
+# For this project, we were expected to build either a Random Forest Classifier or a Random Forest Regressor. This model is meant to analyze a database with the following 3 criteria:
+# 
+# 1.	The database needs to have at least 2 classes
+# 2.	The database should at least have 300 samples/rows
+# 3.	The database should at least have 8 columns/features
+# 
+# Report:
+# Put your results in a report. Your report needs to include the following sections:
+# •	The Problem statement, 
+# •	The Database, 
+# •	The model you picked to solve the problem, 
+# •	Results, the model performance (test, valid), the loss, predictions…
+# (like use of confusion matrices etc…)
+# •	Conclusions
+#                                                      
+# In your results please comment and discuss the followings:
+# 1.	Evaluate the model, how?
+# 2.	How your model change when the number of estimators (decision trees) changes?
+# 3.	What is the best number of estimators? How you can select the best number of estimators?
+# 
+# %% [markdown]
+# # Problem Statement
+# %% [markdown]
+# For our project, we have decided to analyze the Killed or Seriously Injured (KSI) database if we can determine the conditions most likely to lead to fatality.
+# %% [markdown]
+# # Import the database and libraries
 
-- Daniel Siegel - 101367445
-- Michael McAllister - 101359469
-- Hom Kandel - 101385341
-- Eduardo Bastos de Moraes - 101345799
-
-## Project Definition:
-
-For this project, we were expected to build either a Random Forest Classifier or a Random Forest Regressor. This model is meant to analyze a database with the following 3 criteria:
-
-1.	The database needs to have at least 2 classes
-2.	The database should at least have 300 samples/rows
-3.	The database should at least have 8 columns/features
-
-Report:
-Put your results in a report. Your report needs to include the following sections:
-•	The Problem statement,
-•	The Database,
-•	The model you picked to solve the problem,
-•	Results, the model performance (test, valid), the loss, predictions…
-(like use of confusion matrices etc…)
-•	Conclusions
-
-In your results please comment and discuss the followings:
-1.	Evaluate the model, how?
-2.	How your model change when the number of estimators (decision trees) changes?
-3.	What is the best number of estimators? How you can select the best number of estimators?
-
-# Problem Statement
-
-For our project, we have decided to analyze the Killed or Seriously Injured (KSI) database if we can determine the conditions most likely to lead to fatality.
-
-# Import the database and libraries
-"""
-
+# %%
 import pandas as pd
 import numpy as np
 import pandas_profiling
 import seaborn as sns
 from matplotlib import pyplot as plt
+import plotly.express as px
 
+
+# %%
 data = pd.read_csv("https://raw.githubusercontent.com/danielmaxsiegel/GBC-ML1/main/datasets/KSI_CLEAN.csv")
 RSEED = 42 # The answer to the ultimate question of life, the universe, and everything
 
-"""# Initial observations of the dataset"""
+# %% [markdown]
+# # Initial observations of the dataset
 
+# %%
 # Criteria 1: At least 2 classes. We have ~11,000 rows of class A, ~2000 rows of class B, and a very small class C.
 print("The target class, INJURY - the injury suffered by each person in the accident")
 data['INJURY'].value_counts()
 
+
+# %%
 # Criteria 2 & 3: over 300 rows and 8 or more columns/features
 print('The dataset has', data.shape[0], 'rows and', data.shape[1], 'columns.')
 
+
+# %%
 pd.set_option('display.max_columns', None)
 data.head()
 
+
+# %%
 data.info()
 
+
+# %%
+#Adding the graphs for the problem statement chart 
+graf1=data.groupby(['YEAR','INJURY'])['ACCNUM'].nunique().reset_index()
+graf1.rename(columns = {'ACCNUM':'Accidents','YEAR':'Year','INJURY':'Injury'},inplace=True)
+fig1 = px.bar(graf1,x="Year", y='Accidents', color="Injury",title='Number of accidents in Toronto by year',text='Accidents')
+fig2 = px.pie(graf1, names='Injury',values='Accidents',color='Injury',title='Distribution of accidents in Toronto by injury',width=500)
+print(fig1.show(),fig2.show())
+
+
+# %%
+# Clean INJURY column (severity of injury)
+# It appears that the injury code left blank means no injury, or the party is on the police report but indirectly involved in the accident so left blank
+data.loc[data['ACCNUM'] == 1311542, ['ACCNUM', 'IMPACTYPE', 'INVTYPE']]
+
+
+# %%
+data['ACCLASS'].value_counts()
+
+
+# %%
+data.loc[data['ACCNUM'] == 5000995174, ['ACCNUM', 'ACCLASS', 'FATAL', 'INJURY']]
+
+
+# %%
+data.loc[data['ACCNUM'] == 1311542, ['ACCNUM', 'IMPACTYPE', 'INVTYPE']]
+
+
+# %%
 # At first glance the data appears to be very clean
 plt.figure(figsize=(20,5))
 sns.heatmap(data.isna(), cbar=False, cmap='viridis', yticklabels=False)
 
+
+# %%
 #After trying numerous times to try and figure out the blanks values in the database, they've been setup as ' ' strings
 plt.figure(figsize=(20,5))
 sns.heatmap(data.eq(' '), cbar=False, cmap='viridis', yticklabels=False)
 
-"""# Clean Data"""
+# %% [markdown]
+# # Clean Data
 
+# %%
 # Drop superfluous columns - some with irrelevant data, some with duplicate information (such as "FATAL_NO")
-data = data.drop(['YEAR', 'MONTH', 'DAY', 'HOUR', 'MINUTES', 'LATITUDE', 'LONGITUDE', 'Ward_Name', 'Hood_Name', 'Division', 'District', 'STREET1', 'STREET2', 'OFFSET', 'INITDIR', 'ACCLASS', 'FATAL_NO'], axis=1)
+data = data.drop(['Ward_ID', 'Hood_ID', 'ACCNUM', 'YEAR', 'MONTH', 'DAY', 'HOUR', 'MINUTES', 'LATITUDE', 'LONGITUDE', 'Ward_Name', 'Hood_Name', 'Division', 'District', 'STREET1', 'STREET2', 'OFFSET', 'INITDIR', 'ACCLASS', 'FATAL_NO'], axis=1)
 data.info()
 
-for column_name in ['FATAL','DISABILITY', 'ALCOHOL', 'REDLIGHT',
-                    'AG_DRIV', 'SPEEDING', 'PASSENGER', 'EMERG_VEH',
-                    'TRSN_CITY_VEH', 'TRUCK', 'MOTORCYCLE', 'AUTOMOBILE',
+
+# %%
+for column_name in ['FATAL','DISABILITY', 'ALCOHOL', 'REDLIGHT', 
+                    'AG_DRIV', 'SPEEDING', 'PASSENGER', 'EMERG_VEH', 
+                    'TRSN_CITY_VEH', 'TRUCK', 'MOTORCYCLE', 'AUTOMOBILE', 
                     'CYCLIST', 'PEDESTRIAN']:
     data[column_name] = data[column_name].astype('int64')
 
+
+# %%
 # Clean ROAD_CLASS column (which type of road the drivers were on) was setup as an ordinal feature
 data['ROAD_CLASS'] = data['ROAD_CLASS'].replace(to_replace=['Minor Arterial', 'Laneway', 'Local'], value=0, inplace=False, limit=None, regex=False, method='pad')
 data['ROAD_CLASS'] = data['ROAD_CLASS'].replace(to_replace=['Major Arterial', 'Major Arterial Ramp'], value=1, inplace=False, limit=None, regex=False, method='pad')
@@ -101,6 +153,8 @@ data['RDSFCOND'] = data['RDSFCOND'].replace(to_replace=['Dry', ' '], value=0, in
 data['RDSFCOND'] = data['RDSFCOND'].replace(to_replace=['Wet', 'Other', 'Loose Sand or Gravel', 'Loose Snow'], value=1, inplace=False, limit=None, regex=False, method='pad')
 data['RDSFCOND'] = data['RDSFCOND'].replace(to_replace=['Slush', 'Ice', 'Packed Snow', 'Spilled liquid'], value=2, inplace=False, limit=None, regex=False, method='pad')
 
+
+# %%
 # Clean INVAGE column (age of involved party) was setup as an ordinal feature
 # setup ordinal list, and average filled unknown values
 data['INVAGE'] = data['INVAGE'].replace(to_replace=['0 to 4'], value=0, inplace=False, limit=None, regex=False, method='pad')
@@ -125,48 +179,34 @@ data['INVAGE'] = data['INVAGE'].replace(to_replace=['90 to 94'], value=18, inpla
 data['INVAGE'] = data['INVAGE'].replace(to_replace=['Over 95'], value=19, inplace=False, limit=None, regex=False, method='pad')
 data['INVAGE'] = data['INVAGE'].replace(to_replace=['unknown'], value=7, inplace=False, limit=None, regex=False, method='pad')
 
-# Clean INVAGE column (age of involved party) was setup as an ordinal feature
-# setup ordinal list, and average filled unknown values
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['0 to 4'], value=0, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['5 to 9'], value=0, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['10 to 14'], value=1, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['15 to 19'], value=1, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['20 to 24'], value=2, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['25 to 29'], value=2, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['30 to 34'], value=3, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['35 to 39'], value=3, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['40 to 44'], value=4, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['45 to 49'], value=4, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['50 to 54'], value=5, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['55 to 59'], value=5, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['60 to 64'], value=6, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['65 to 69'], value=6, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['70 to 74'], value=7, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['75 to 79'], value=7, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['80 to 84'], value=8, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['85 to 89'], value=8, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['90 to 94'], value=9, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['Over 95'], value=9, inplace=False, limit=None, regex=False, method='pad')
-data['INVAGE'] = data['INVAGE'].replace(to_replace=['unknown'], value=2, inplace=False, limit=None, regex=False, method='pad')
 
+# %%
 # Clean INJURY column (severity of injury)
 # It appears that the injury code left blank means no injury, or the party is on the police report but indirectly involved in the accident so left blank
-data.loc[data['INJURY'] == ' ']
+data.loc[data['INJURY'] == ' '].head()
 
+
+# %%
 # Injury will be our label, with ' ' values set to no injury
 data['INJURY'] = data['INJURY'].replace(to_replace=['None', ' '], value=0, inplace=False, limit=None, regex=False, method='pad')
 data['INJURY'] = data['INJURY'].replace(to_replace=['Minimal', 'Minor'], value=1, inplace=False, limit=None, regex=False, method='pad')
 data['INJURY'] = data['INJURY'].replace(to_replace=['Major'], value=2, inplace=False, limit=None, regex=False, method='pad')
 data['INJURY'] = data['INJURY'].replace(to_replace=['Fatal'], value=3, inplace=False, limit=None, regex=False, method='pad')
 
+
+# %%
 # Clean VEHTYPE column - the type of vehicle involved.
 # As we can see, pedestrian collisions have an other classifier very frequently.  However, it's also been tied to vehicle owners making this a difficult feature to clean
-# As other is such a large category, I will not be changing this into an ordinal set as we lack the domain knowledge, and instead categorize using get_dummies.
-# So we ended up grouping vehicle classes, leaving 'other' as it's own category, and leaving ' ' as it's own category
+# As other is such a large category, I will not be changing this into an ordinal set as we lack the domain knowledge, and instead categorize using get_dummies.  
+# So we ended up grouping vehicle classes, leaving 'other' as it's own category, and leaving ' ' as it's own category 
 data['VEHTYPE'].value_counts()
 
-data.loc[data['VEHTYPE'] == 'Other']
 
+# %%
+data.loc[data['VEHTYPE'] == 'Other'].head()
+
+
+# %%
 #Grouping small categories together by weight class/vehicle type and setup as an ordinal feature
 data['VEHTYPE'] = data['VEHTYPE'].replace(to_replace=[' '], value='NA', inplace=False, limit=None, regex=False, method='pad')
 data['VEHTYPE'] = data['VEHTYPE'].replace(to_replace=['Municipal Transit Bus (TTC)', 'Truck - Open', 'Delivery Van', 'Street Car', 'Truck - Dump', 'Truck-Tractor', 'Bus (Other) (Go Bus, Gray Coach)', 'Truck (other)', 'Intercity Bus', 'Truck - Tank', 'School Bus', 'Construction Equipment', 'Truck - Car Carrier', 'Fire Vehicle', 'Other Emergency Vehicle'], value='Heavy Commercial', inplace=False, limit=None, regex=False, method='pad')
@@ -174,6 +214,8 @@ data['VEHTYPE'] = data['VEHTYPE'].replace(to_replace=['Off Road - 2 Wheels', 'Mo
 data['VEHTYPE'] = data['VEHTYPE'].replace(to_replace=['Pick Up Truck', 'Passenger Van', 'Truck - Closed (Blazer, etc)', 'Tow Truck'], value='Large Auto', inplace=False, limit=None, regex=False, method='pad')
 data['VEHTYPE'] = data['VEHTYPE'].replace(to_replace=['Taxi', 'Police Vehicle'], value='Automobile, Station Wagon', inplace=False, limit=None, regex=False, method='pad')
 
+
+# %%
 # Clean INVTYPE column - the involvement of the person in the row of the database
 # Grouping small categories together by weight class/vehicle type
 data['INVTYPE'] = data['INVTYPE'].replace(to_replace=['Moped Driver'], value='Motorcycle Driver', inplace=False, limit=None, regex=False, method='pad')
@@ -182,8 +224,12 @@ data['INVTYPE'] = data['INVTYPE'].replace(to_replace=['Wheelchair', 'In-Line Ska
 data['INVTYPE'] = data['INVTYPE'].replace(to_replace=[' ', 'Other Property Owner', 'Driver - Not Hit', 'a', 'Runaway - No Driver', 'Unknown - FTR', 'Pedestrian - Not Hit', 'Witness'], value='Other', inplace=False, limit=None, regex=False, method='pad')
 data['INVTYPE'] = data['INVTYPE'].replace(to_replace=['Trailer Owner'], value='Vehicle Owner', inplace=False, limit=None, regex=False, method='pad')
 
+
+# %%
 #Ordinal features and our label has now been setup, now we need to one hot encode all our categorical features
 
+
+# %%
 # Clean LOCCORD - Location Coordinates of accident
 data['LOCCOORD'] = data['LOCCOORD'].replace(to_replace=[' ', 'Park, Private Property, Public Lane', 'Entrance Ramp Westbound'], value='Other', inplace=False, limit=None, regex=False, method='pad')
 data1 = pd.get_dummies(data[['LOCCOORD']])
@@ -251,34 +297,58 @@ data1 = pd.get_dummies(data[['CYCCOND']])
 data = pd.concat([data,data1], axis=1)
 data.drop('CYCCOND', axis=1, inplace=True)
 
+
+# %%
 data.info()
 
-data.head()
 
-"""# Data Preprocessing"""
+# %%
+data.shape
 
+# %% [markdown]
+# # Data Preprocessing
+
+# %%
 ############### PCA ######################################
 
+
+# %%
 from sklearn.decomposition import TruncatedSVD as svd
-
-df = data.iloc[:,24:]
-
-df.head()
-
-df.shape
-
 from sklearn.pipeline import Pipeline
 
-# define dataset
-X = df
-y = data.iloc[:,9]
-y
 
+# %%
+# Moving injury target to the end of the dataframe
+injury = data['INJURY']
+d = data.drop(columns=['INJURY'])
+data = pd.concat([d, injury], axis=1)
+
+
+# %%
+data.shape
+
+
+# %%
+data.head()
+
+
+# %%
+y = data.iloc[:,-1]
+X = data.iloc[:,6:-2]
+
+
+# %%
+X.head()
+
+
+# %%
 from sklearn.linear_model import LogisticRegression
 
 steps = [('svd', svd), ('m', LogisticRegression())]
 model = Pipeline(steps=steps)
 
+
+# %%
 from numpy import mean
 from numpy import std
 from sklearn.datasets import make_classification
@@ -287,60 +357,75 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.decomposition import TruncatedSVD
 from sklearn.linear_model import LogisticRegression
-from matplotlib import pyplot
+from matplotlib import pyplot  
 
 
 def get_models():
-	models = dict()
-	for i in range(1,20):
-		steps = [('svd', TruncatedSVD(n_components=i)), ('m', LogisticRegression())]
-		models[str(i)] = Pipeline(steps=steps)
-	return models
-
+    models = dict()
+    for i in range(1,40):
+        steps = [('svd', TruncatedSVD(n_components=i)), ('m', LogisticRegression())]
+        models[str(i)] = Pipeline(steps=steps)
+    return models
+ 
 # evaluate a give model using cross-validation
 def evaluate_model(model, X, y):
-	cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
-	scores = cross_val_score(model, X, y, scoring='accuracy', cv=cv, n_jobs=-1, error_score='raise')
-	return scores
+    cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
+    scores = cross_val_score(model, X, y, scoring='accuracy', cv=cv, n_jobs=-1, error_score='raise')
+    return scores
 
 # get the models to evaluate
 models = get_models()
 # evaluate the models and store results
 results, names = list(), list()
 for name, model in models.items():
-	scores = evaluate_model(model, X, y)
-	results.append(scores)
-	names.append(name)
-	print('>%s %.3f (%.3f)' % (name, mean(scores), std(scores)))
+    scores = evaluate_model(model, X, y)
+    results.append(scores)
+    names.append(name)
+    print('>%s %.3f (%.3f)' % (name, mean(scores), std(scores)))
 # plot model performance for comparison
 pyplot.boxplot(results, labels=names, showmeans=True)
 pyplot.xticks(rotation=45)
 pyplot.show()
 
-svd = TruncatedSVD(n_components=18, n_iter=7, random_state=42)
-svd.fit(df)
+
+# %%
+svd = TruncatedSVD(n_components=34, n_iter=7, random_state=42)
+svd.fit(X)
 X_svd = svd.transform(X)
 
+
+# %%
 print("original shape:   ", X.shape)
 print("transformed shape:", X_svd.shape)
 
-a = data.iloc[:,:24]
+
+# %%
+a = data.iloc[:,:5]
 b = pd.DataFrame(X_svd)
 
-data = pd.concat([a, b], axis=1)
 
-# Split data into X and y
-injury_data = data['INJURY']
-data = data.drop(columns=['INJURY'])
+# %%
+a.head()
 
-data.head()
 
-"""## Seletion of Best best features"""
+# %%
+X = pd.concat([a, b], axis=1)
 
-# Commented out IPython magic to ensure Python compatibility.
+
+# %%
+X.head()
+
+# %% [markdown]
+# ## Seletion of Best best features
+
+# %%
+feature_names = list(X.columns)
+
+
+# %%
 import numpy as np
 import pandas as pd
-# %matplotlib inline
+get_ipython().run_line_magic('matplotlib', 'inline')
 import scipy.stats as ss
 from collections import Counter
 import math
@@ -354,10 +439,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import RandomForestClassifier
 from lightgbm import LGBMClassifier
 
-X = data
-feature_names = list(X.columns)
-y = injury_data
-num_feats = 20
+num_feats = 30
 
 cor_list = cor_support = cor_feature = []
 for i in X.columns:
@@ -377,7 +459,7 @@ rfe_support = rfe_selector.get_support()
 rfe_feature = X.loc[:,rfe_support].columns.tolist()
 
 embedded_lr_support = embedded_lr_feature = []
-lr = LogisticRegression(penalty='l1', solver='liblinear')
+lr = LogisticRegression(penalty='l1', solver='liblinear', max_iter=10000)
 embedded_lr_selector = SelectFromModel(lr, max_features=num_feats)
 embedded_lr_selector = embedded_lr_selector.fit(X, y)
 embedded_lr_support = embedded_lr_selector.get_support()
@@ -410,17 +492,23 @@ feature_selection_df['Total'] = np.sum(feature_selection_df, axis=1)
 feature_selection_df = feature_selection_df.sort_values(['Total','Feature'] , ascending=False)
 feature_selection_df.index = range(1, len(feature_selection_df)+1)
 
+
+# %%
 feature_selection_df
 
-"""# Run Random Forest"""
+# %% [markdown]
+# # Run Random Forest
 
+# %%
 from sklearn.model_selection import train_test_split
 
-train, test, train_labels, test_labels = train_test_split(data, injury_data,
-                                                          stratify = injury_data,
-                                                          test_size = 0.3,
+train, test, train_labels, test_labels = train_test_split(X, y, 
+                                                          stratify = y,
+                                                          test_size = 0.3, 
                                                           random_state = RSEED)
 
+
+# %%
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.ensemble import RandomForestClassifier
 
@@ -433,8 +521,8 @@ parameters = {
     'bootstrap': [False]
 }
 
-model = RandomForestClassifier(n_estimators=100,
-                               random_state=RSEED,
+model = RandomForestClassifier(n_estimators=100, 
+                               random_state=RSEED, 
                                max_features = 'sqrt')
 
 cv = RandomizedSearchCV(
@@ -446,13 +534,21 @@ cv = RandomizedSearchCV(
     random_state=RSEED
   )
 
-data.head()
 
+# %%
+X.head()
+
+
+# %%
 clf = RandomForestClassifier(max_depth=10, random_state=RSEED)
 clf.fit(train, train_labels)
 
+
+# %%
 predictions = clf.predict(test)
 
+
+# %%
 from sklearn.metrics import confusion_matrix
 import itertools
 
@@ -481,13 +577,13 @@ def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix'
 
     fmt = '.2f' if normalize else 'd'
     thresh = cm.max() / 2.
-
+    
     # Labeling the plot
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
         plt.text(j, i, format(cm[i, j], fmt), fontsize = 20,
                  horizontalalignment="center",
                  color="white" if cm[i, j] > thresh else "black")
-
+        
     plt.grid(None)
     plt.tight_layout()
     plt.ylabel('True label', size = 18)
@@ -496,4 +592,12 @@ def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix'
 cm = confusion_matrix(test_labels, predictions)
 plot_confusion_matrix(cm, ['NO INJURY', 'MINOR INJURY', 'MAJOR INJURY', 'FATAL'])
 
+
+# %%
 clf.score(test, test_labels)
+
+
+# %%
+
+
+
