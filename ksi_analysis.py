@@ -68,6 +68,16 @@ This project was carried out with the folowing objectives:
 - To understand the factors affecting accidents
 - To predict level injury in traffic accident
 
+# Database description
+
+We used the dataset "Killed or Seriously Injured (KSI) Toronto Clean" from Kaggle, which can be found at [this link](https://www.kaggle.com/jrmistry/killed-or-seriously-injured-ksi-toronto-clean). It's a compilation of records of traffic accidents in the city of Toronto between 2007 and 2017. 
+
+It contains rows for every person involved in an accident, and those similar accidents can be seen from the accident number (ACCNUM) column. 
+
+Originally, we wanted to classify which accidents would lead to fatalities by targetting the "FATAL" column - but we realized that that is a dummy column based on "ACCLASS" which is set to True/1 for any accident that involved a fatality, not any row that was a person who was a fatality in an accident. Therefore, targetting that column would be very incorrect - it has far more "True/1" values than there are actual fatalities in the database.
+
+Instead, we opted to target the INJURY column, and make a model which could predict which traffic accidents conditions would lead to what level of injury on a per-person basis.
+
 # Import the database and libraries
 """
 
@@ -83,7 +93,7 @@ RSEED = 42 # The answer to the ultimate question of life, the universe, and ever
 
 """# Initial observations of the dataset"""
 
-# Criteria 1: At least 2 classes. We have ~11,000 rows of class A, ~2000 rows of class B, and a very small class C.
+# Criteria 1: At least 2 classes. We'll reduce these in a later step
 print("The target class, INJURY - the injury suffered by each person in the accident")
 data['INJURY'].value_counts()
 
@@ -121,11 +131,14 @@ data.loc[data['ACCNUM'] == 1311542, ['ACCNUM', 'IMPACTYPE', 'INVTYPE']]
 
 data['ACCLASS'].value_counts()
 
+# Demonstrate that one accident can lead to multiple rows - and even though FATAL
+# is true for both, only one person died.
 data.loc[data['ACCNUM'] == 5000995174, ['ACCNUM', 'ACCLASS', 'FATAL', 'INJURY']]
 
+# Demonstrate that per accident, each record is one involved person
 data.loc[data['ACCNUM'] == 1311542, ['ACCNUM', 'IMPACTYPE', 'INVTYPE']]
 
-# At first glance the data appears to be very clean
+# At first glance the data appears to be very clean because there's no Nones/NaNs
 plt.figure(figsize=(20,5))
 sns.heatmap(data.isna(), cbar=False, cmap='viridis', yticklabels=False)
 
@@ -194,7 +207,7 @@ data['INVAGE'] = data['INVAGE'].replace(to_replace=['unknown'], value=7, inplace
 # It appears that the injury code left blank means no injury, or the party is on the police report but indirectly involved in the accident so left blank
 data.loc[data['INJURY'] == ' '].head()
 
-# Injury will be our label, with ' ' values set to no injury
+# Injury will be our target class, with ' ' values set to no injury
 data['INJURY'] = data['INJURY'].replace(to_replace=['None', ' '], value=0, inplace=False, limit=None, regex=False, method='pad')
 data['INJURY'] = data['INJURY'].replace(to_replace=['Minimal', 'Minor'], value=1, inplace=False, limit=None, regex=False, method='pad')
 data['INJURY'] = data['INJURY'].replace(to_replace=['Major'], value=2, inplace=False, limit=None, regex=False, method='pad')
@@ -260,6 +273,7 @@ data1 = pd.get_dummies(data[['MANOEUVER']])
 data = pd.concat([data,data1], axis=1)
 data.drop('MANOEUVER', axis=1, inplace=True)
 
+# DRIVACT = Driver Action, what the driver was doing
 data1 = pd.get_dummies(data[['DRIVACT']])
 data = pd.concat([data,data1], axis=1)
 data.drop('DRIVACT', axis=1, inplace=True)
@@ -317,11 +331,8 @@ X = data.iloc[:,6:-2]
 
 X.head()
 
-from sklearn.linear_model import LogisticRegression
-
-steps = [('svd', svd), ('m', LogisticRegression())]
-model = Pipeline(steps=steps)
-
+# Run repeated stratified K Fold, cross-validating the results and using logistic regression
+# to plot categorical variable accuracy gain based on number of components 
 from numpy import mean
 from numpy import std
 from sklearn.datasets import make_classification
@@ -360,18 +371,23 @@ pyplot.boxplot(results, labels=names, showmeans=True)
 pyplot.xticks(rotation=45)
 pyplot.show()
 
+# We can see the increase in accuracy based on the increase in components -
+# We decided to go with 34 components using SVD.
 svd = TruncatedSVD(n_components=34, n_iter=7, random_state=42)
 svd.fit(X)
 X_svd = svd.transform(X)
 
+# Demonstrate new, reduced shape of the dataset
 print("original shape:   ", X.shape)
 print("transformed shape:", X_svd.shape)
 
+# split out ordinal and categorical variables
 a = data.iloc[:,:5]
 b = pd.DataFrame(X_svd)
 
 a.head()
 
+# X is our new dataframe with all of the different types of variables
 X = pd.concat([a, b], axis=1)
 
 X.head()
@@ -451,6 +467,11 @@ feature_selection_df = feature_selection_df.sort_values(['Total','Feature'] , as
 feature_selection_df.index = range(1, len(feature_selection_df)+1)
 
 feature_selection_df
+
+# We now know which features aren't particularly relevant - let's drop them from the table.
+features_to_drop = [33,28,26,'WEEKDAY','LIGHT','VISIBILITY', 'ROAD_CLASS','RDSFCOND',2]
+concise_data = X.drop(columns=features_to_drop, axis=1)
+X = concise_data
 
 """# Run Random Forest"""
 
@@ -534,12 +555,12 @@ print("No Injury:", 1700 / (0 + 62 + 53 + 1700))
 from sklearn.model_selection import RandomizedSearchCV
 
 parameters = {
-    'n_estimators':[50, 100],
+    'n_estimators':[80, 100, 120],
     'max_depth':[5,12],
     'max_features': ['auto', 'sqrt'],
     'max_leaf_nodes':[14,28],
     'min_samples_split': [3,5],
-    'bootstrap': [False]
+    'bootstrap': [True,False]
 }
 
 parameters
@@ -559,4 +580,9 @@ print("Best estimator:", cv.best_estimator_)
 print("Best score:", cv.best_score_)
 print("Best parameters:", cv.best_params_)
 
-"""Funnily enough, random search CV turned out a tree with a lower precision than the "random" random forest we tried! It seems that 100 estimators is the best option when compared to a tree with other parameters."""
+"""### Funnily enough, random search CV turned out a tree with a lower precision than the "random" random forest we tried! It seems that 100 estimators is the best option when compared to a tree with other parameters.
+
+## Conclusion:
+
+### Traffic accidents, especially minor ones, can be very hard to accurately predict. For better accuracy, additional data about the participants of the accident would help - such as their health conditions. Also, it's possible that we suffer a loss of data from traffic accidents that don't result in police reports - especially things like fender benders. As a result, traffic accident data may seem far more dangerous than it is in reality.
+"""
