@@ -1,14 +1,12 @@
-# KSI Analysis
+# Toronto Traffic Accident Injury Severity Analysis
+## _Predicting injuries Using Machine Learning_
+The Toronto Police Open Data portal gives us an opportunity to analyze reports from law enforcement in Toronto, and make predictions on the resulting information. An example of this data, detailing traffic incidents between 2007 and 2017 was uploaded to [Kaggle](https://www.kaggle.com/jrmistry/killed-or-seriously-injured-ksi-toronto-clean), and with it we created a machine learning model that could predict what severity of injury a party in a traffic accident would receive.
 
-An analysis of the Toronto KSI database found [here on Kaggle](https://www.kaggle.com/jrmistry/killed-or-seriously-injured-ksi-toronto-clean).
+This process involved cleaning the data of issues such as redundant and misleading fields, determining which fields were most relevant to the result using truncated Singular Value Decomposition (SVD) and logistic regression, creating a random forest model for the classification, and improving our results with RandomSearchCV.
 
-## Usage
+## Development
 
-Import ksi_analysis.ipynb into your Jupyter environment and run it.
-
-## Contributing
-
-To submit changes to this repo, please do the following steps:
+To contribute to this project, please complete the following steps:
 - `git checkout main`
 - `git pull main`
 - `git checkout -b <your_branch_name>` (create a branch name based on the changes you want to make)
@@ -23,7 +21,7 @@ To submit changes to this repo, please do the following steps:
 - When you have approvals, merge your pull request
 
 ## Authors
-- Daniel Siegel - 101367445
-- Michael McAllister - 101359469
-- Hom Kandel - 101385341
-- Eduardo Bastos de Moraes - 101345799
+- [Daniel Siegel](https://github.com/danielmaxsiegel) - 101367445
+- [Michael McAllister](https://github.com/michaeldavidmcallister) - 101359469
+- [Hom Kandel](https://github.com/homnath008) - 101385341
+- [Eduardo Bastos de Moraes](https://github.com/eduardomoraes) - 101345799
